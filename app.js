@@ -1,5 +1,8 @@
 'use strict';
 
+// 版本号写在 index.html 引用 app.js 的地址里（?v=…），首页底部会显示，用来确认手机上是不是最新版
+const APP_VERSION = new URL(document.currentScript.src).searchParams.get('v') || '';
+
 // ---------- 数据存储 ----------
 const STORE_KEY = 'dictation.lists';
 
@@ -327,6 +330,7 @@ $('retryWrongBtn').onclick = () => openDictation(checkWords.filter((x) => x.wron
 $('homeBtn').onclick = () => show('home');
 
 // ---------- 启动 ----------
+$('version').textContent = `版本 ${APP_VERSION}`;
 show('home');
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});

@@ -1,9 +1,9 @@
 // 缓存应用外壳，离线也能打开并听写已保存的词表
-const CACHE = 'dictation-v2';
+const CACHE = 'dictation-v3';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))));
   self.skipWaiting();
 });
 
@@ -28,6 +28,9 @@ self.addEventListener('fetch', (e) => {
         }
         return res;
       })
-      .catch(() => caches.match(e.request))
+      .catch(() =>
+        // 离线时：先找完全相同的地址，找不到再忽略 ?v= 找同一个文件
+        caches.match(e.request).then((r) => r || caches.match(e.request, { ignoreSearch: true }))
+      )
   );
 });

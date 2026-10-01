@@ -38,6 +38,7 @@ main { max-width: 560px; margin: 0 auto; padding: 16px; }
 h2 { font-size: 18px; margin: 24px 0 8px; }
 .hidden { display: none !important; }
 .hint { color: var(--muted); font-size: 15px; }
+.version { margin-top: 32px; text-align: center; color: var(--muted); font-size: 13px; }
 
 .actions { display: grid; gap: 12px; }
 .big-btn {

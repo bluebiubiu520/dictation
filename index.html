@@ -8,7 +8,8 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
-  <link rel="stylesheet" href="style.css">
+  <!-- 发布新版本时，把下面两处 ?v= 一起改掉：文件地址变了，手机就一定会下载新文件 -->
+  <link rel="stylesheet" href="style.css?v=1.1.0">
 </head>
 <body>
   <header class="topbar">
@@ -33,6 +34,7 @@
       <h2>我的词表</h2>
       <ul id="listList" class="list"></ul>
       <p id="emptyHint" class="hint">还没有词表，先拍一张课本试试吧。</p>
+      <p id="version" class="version"></p>
     </section>
 
     <!-- 识别中 -->
@@ -101,6 +103,6 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-  <script src="app.js"></script>
+  <script src="app.js?v=1.1.0"></script>
 </body>
 </html>
