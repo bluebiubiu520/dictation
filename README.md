@@ -5,7 +5,8 @@
 ## 技术
 
 - 纯前端，无需后端、无需构建：`index.html` + `app.js` + `style.css`
-- 文字识别：[Tesseract.js](https://github.com/naptha/tesseract.js)（浏览器内运行，简体中文 + 英文，第一次使用会下载约 20MB 语言包）
+- 文字识别：[PaddleOCR.js](https://www.npmjs.com/package/@paddleocr/paddleocr-js)（PP-OCRv6 tiny，浏览器内运行，第一次拍照下载约 12MB，之后缓存在手机上）。识别出的一行字再按照片上的空隙拆成生字、词语。
+  手机不支持（需要 iOS 16.4 以上 / 支持 WebAssembly SIMD 的浏览器）或加载失败时，自动改用 [Tesseract.js](https://github.com/naptha/tesseract.js)
 - 朗读：浏览器自带的 Web Speech API（中文用 zh-CN，英文用 en-US，自动判断）
 - 词表保存在浏览器 localStorage
 - PWA：可在手机上“添加到主屏幕”，离线也能听写已保存的词表

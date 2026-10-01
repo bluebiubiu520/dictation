@@ -10,8 +10,19 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="小听写">
+  <!-- PaddleOCR 识字工具依赖的库 -->
+  <script type="importmap">
+  {
+    "imports": {
+      "onnxruntime-web": "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.30.0/dist/ort.wasm.bundle.min.mjs",
+      "js-yaml": "https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/+esm",
+      "clipper-lib": "https://cdn.jsdelivr.net/npm/clipper-lib@6.4.2/+esm",
+      "@techstark/opencv-js": "https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.10.0-release.1/+esm"
+    }
+  }
+  </script>
   <!-- 发布新版本时，把下面两处 ?v= 一起改掉：文件地址变了，手机就一定会下载新文件 -->
-  <link rel="stylesheet" href="style.css?v=1.2.1">
+  <link rel="stylesheet" href="style.css?v=1.3.0">
 </head>
 <body>
   <div id="splash" class="splash" aria-hidden="true">
@@ -110,6 +121,6 @@
     </section>
   </main>
 
-  <script src="app.js?v=1.2.1"></script>
+  <script src="app.js?v=1.3.0"></script>
 </body>
 </html>
