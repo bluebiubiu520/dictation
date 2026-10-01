@@ -1,9 +1,9 @@
 // 缓存应用外壳，离线也能打开并听写已保存的词表
-const CACHE = 'dictation-v5';
+const CACHE = 'dictation-v6';
 // 识字工具和模型（十几 MB），地址里带着版本号，下载一次就一直用缓存
 const OCR_CACHE = 'dictation-ocr-v1';
 const OCR_HOSTS = ['cdn.jsdelivr.net', 'paddle-model-ecology.bj.bcebos.com'];
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json', 'icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.json', 'icon.svg', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'keep-awake.mp4'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))));

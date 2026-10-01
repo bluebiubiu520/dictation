@@ -122,3 +122,6 @@ progress { width: 100%; height: 12px; }
 @media (prefers-reduced-motion: reduce) {
   .splash-logo, .splash-name, .splash-tagline { animation: none; }
 }
+
+/* 保持亮屏用的小视频，看不见 */
+.keep-awake { position: fixed; left: 0; bottom: 0; width: 1px; height: 1px; opacity: 0.01; pointer-events: none; }

@@ -748,6 +748,50 @@ function updateScore() {
 $('retryWrongBtn').onclick = () => openDictation(checkWords.filter((x) => x.wrong).map((x) => x.w));
 $('homeBtn').onclick = () => show('home');
 
+// ---------- 保持亮屏 ----------
+// App 开着的时候不让手机熄屏：听写时一直没人碰屏幕，熄屏后朗读就停了
+let wakeLock = null;
+let keepAwakeVideo = null;
+let useVideo = false;
+
+// iOS 18.4 以前，添加到桌面打开的 App 里 wakeLock 不报错但不起作用，只能用老办法：循环播放一段静音小视频
+function wakeLockUnreliable() {
+  if (!('wakeLock' in navigator)) return true;
+  const ios = navigator.userAgent.match(/(?:iPhone|iPad|iPod).* OS (\d+)_(\d+)/);
+  const standalone = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  return !!ios && standalone && (+ios[1] < 18 || (+ios[1] === 18 && +ios[2] < 4));
+}
+
+function playKeepAwakeVideo() {
+  if (!keepAwakeVideo) {
+    keepAwakeVideo = document.createElement('video');
+    keepAwakeVideo.src = 'keep-awake.mp4';
+    keepAwakeVideo.muted = true;
+    keepAwakeVideo.loop = true;
+    keepAwakeVideo.setAttribute('muted', '');
+    keepAwakeVideo.setAttribute('playsinline', '');
+    keepAwakeVideo.className = 'keep-awake';
+    document.body.appendChild(keepAwakeVideo);
+  }
+  if (keepAwakeVideo.paused) keepAwakeVideo.play().catch(() => {}); // 要点过屏幕才能播，下次点的时候再试
+}
+
+async function keepAwake() {
+  if (document.visibilityState !== 'visible') return;
+  if (useVideo || wakeLockUnreliable()) { playKeepAwakeVideo(); return; }
+  if (wakeLock && !wakeLock.released) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+  } catch {
+    // 有的浏览器要点过屏幕才允许；点过还不行（比如一些 App 里的浏览器）就换成小视频
+    if (navigator.userActivation && navigator.userActivation.isActive) { useVideo = true; playKeepAwakeVideo(); }
+  }
+}
+
+// 切到别的 App 再回来时系统会自动解除，要重新申请
+document.addEventListener('visibilitychange', keepAwake);
+document.addEventListener('pointerdown', keepAwake);
+
 // ---------- 启动 ----------
 // 启动画面至少停留一会儿，点一下可以跳过
 function hideSplash() {
@@ -758,6 +802,7 @@ function hideSplash() {
 }
 $('splash').onclick = hideSplash;
 setTimeout(hideSplash, 1200);
+keepAwake();
 
 $('version').textContent = `版本 ${APP_VERSION}`;
 show('home');
