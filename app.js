@@ -117,10 +117,32 @@ function defaultName() {
 $('manualBtn').onclick = () => openEditor(null);
 
 // ---------- 拍照识别 ----------
+const TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
 let ocrWorker = null;
+let tesseractLoading = null;
+
+// 识字工具比较大，等第一次拍照时才下载，不拖慢打开速度
+function loadTesseract() {
+  if (typeof Tesseract !== 'undefined') return Promise.resolve();
+  if (!tesseractLoading) {
+    tesseractLoading = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = TESSERACT_URL;
+      s.onload = resolve;
+      s.onerror = () => {
+        s.remove();
+        tesseractLoading = null; // 下次拍照再试
+        reject(new Error('识字工具没有加载成功，请检查网络'));
+      };
+      document.head.appendChild(s);
+    });
+  }
+  return tesseractLoading;
+}
 
 async function getWorker() {
   if (ocrWorker) return ocrWorker;
+  await loadTesseract();
   ocrWorker = await Tesseract.createWorker(['chi_sim', 'eng'], 1, {
     logger: (m) => {
       if (m.status === 'recognizing text') {
@@ -155,7 +177,6 @@ function loadImage(file) {
 
 async function handleImage(file) {
   if (!file) return;
-  if (typeof Tesseract === 'undefined') { alert('识字工具没有加载成功，请检查网络'); return; }
   show('ocr');
   $('ocrProgress').value = 0;
   $('ocrStatus').textContent = '正在准备识字工具（第一次会慢一点）…';
@@ -330,6 +351,16 @@ $('retryWrongBtn').onclick = () => openDictation(checkWords.filter((x) => x.wron
 $('homeBtn').onclick = () => show('home');
 
 // ---------- 启动 ----------
+// 启动画面至少停留一会儿，点一下可以跳过
+function hideSplash() {
+  const s = $('splash');
+  if (!s || s.classList.contains('hide')) return;
+  s.classList.add('hide');
+  setTimeout(() => s.remove(), 500);
+}
+$('splash').onclick = hideSplash;
+setTimeout(hideSplash, 1200);
+
 $('version').textContent = `版本 ${APP_VERSION}`;
 show('home');
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
