@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ff8a3d">
+  <title>小听写</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="back hidden" id="backBtn" aria-label="返回">‹</button>
+    <h1 id="title">小听写</h1>
+  </header>
+
+  <main>
+    <!-- 首页：词表列表 -->
+    <section id="view-home" class="view">
+      <div class="actions">
+        <label class="big-btn primary">
+          📷 拍书本
+          <input type="file" accept="image/*" capture="environment" id="cameraInput" hidden>
+        </label>
+        <label class="big-btn">
+          🖼️ 选图片
+          <input type="file" accept="image/*" id="galleryInput" hidden>
+        </label>
+        <button class="big-btn" id="manualBtn">✏️ 手动输入</button>
+      </div>
+      <h2>我的词表</h2>
+      <ul id="listList" class="list"></ul>
+      <p id="emptyHint" class="hint">还没有词表，先拍一张课本试试吧。</p>
+    </section>
+
+    <!-- 识别中 -->
+    <section id="view-ocr" class="view hidden">
+      <img id="preview" alt="预览">
+      <p id="ocrStatus" class="hint">正在识别文字…</p>
+      <progress id="ocrProgress" max="1" value="0"></progress>
+    </section>
+
+    <!-- 编辑词表 -->
+    <section id="view-edit" class="view hidden">
+      <label class="field">词表名称
+        <input id="listName" type="text" placeholder="例如：第三课 生字">
+      </label>
+      <label class="field">词语（每行一个，可以修改识别错的字）
+        <textarea id="wordsText" rows="12"></textarea>
+      </label>
+      <p class="hint" id="wordCount"></p>
+      <div class="row">
+        <button class="btn" id="resplitBtn">按空格/标点重新拆分</button>
+        <button class="btn danger hidden" id="deleteBtn">删除词表</button>
+      </div>
+      <button class="big-btn primary" id="saveBtn">保存并开始听写</button>
+    </section>
+
+    <!-- 听写设置 + 进行中 -->
+    <section id="view-dictate" class="view hidden">
+      <div id="setup">
+        <label class="field">每个词读几遍
+          <select id="repeatSel"><option>1</option><option selected>2</option><option>3</option></select>
+        </label>
+        <label class="field">每个词之间停多久（秒）
+          <select id="gapSel"><option>3</option><option selected>6</option><option>10</option><option>15</option><option value="0">不自动，手动点下一个</option></select>
+        </label>
+        <label class="field">语速
+          <select id="rateSel"><option value="0.6">慢</option><option value="0.8" selected>适中</option><option value="1">正常</option></select>
+        </label>
+        <label class="check"><input type="checkbox" id="shuffleChk"> 打乱顺序</label>
+        <button class="big-btn primary" id="startBtn">开始听写</button>
+      </div>
+
+      <div id="running" class="hidden">
+        <div class="counter"><span id="curIdx">1</span> / <span id="total">1</span></div>
+        <div class="bubble" id="bubble">🔊</div>
+        <p class="hint" id="runHint">请在本子上写下听到的词</p>
+        <div class="row center">
+          <button class="btn" id="prevBtn">上一个</button>
+          <button class="btn" id="repeatBtn">再读一遍</button>
+          <button class="btn primary" id="nextBtn">下一个</button>
+        </div>
+        <div class="row center">
+          <button class="btn" id="pauseBtn">暂停</button>
+          <button class="btn danger" id="finishBtn">结束，去对答案</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 对答案 -->
+    <section id="view-check" class="view hidden">
+      <p class="hint">对照本子，写错的点一下标红。</p>
+      <ul id="checkList" class="check-list"></ul>
+      <div class="score" id="score"></div>
+      <button class="big-btn primary" id="retryWrongBtn">只听写错的</button>
+      <button class="big-btn" id="homeBtn">回到首页</button>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
