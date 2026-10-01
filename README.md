@@ -17,3 +17,9 @@ python3 -m http.server 8080
 ```
 
 然后打开 http://localhost:8080 。手机要调用摄像头需要 HTTPS（或 localhost），部署到任意静态托管（GitHub Pages、Vercel、Netlify）即可。
+
+## 测试
+
+```bash
+node tests/split.test.js
+```

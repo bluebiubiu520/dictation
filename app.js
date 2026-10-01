@@ -17,21 +17,69 @@ function saveLists(lists) {
 const CJK = '\\u3400-\\u9fff\\uf900-\\ufaff';
 const hasCJK = (s) => new RegExp(`[${CJK}]`).test(s);
 
-// OCR 常在汉字之间插入单个空格，先去掉；换行和多个空格当作词与词的分隔
-function cleanOcrText(text) {
-  return text
-    .replace(new RegExp(`([${CJK}]) (?=[${CJK}])`, 'g'), '$1')
-    .replace(/[|_~`]/g, ' ');
+const SEPARATORS = /[\s,，.。;；:：!！?？、"“”'‘’()（）\[\]【】《》<>\-—…·|_~`]+/;
+const MAX_WORD_LEN = 4; // 超过 4 个字的一串汉字多半是句子，再细分成词
+
+const zhSegmenter = typeof Intl !== 'undefined' && Intl.Segmenter
+  ? new Intl.Segmenter('zh', { granularity: 'word' })
+  : null;
+
+// 一句话拆成两个字以上的词，比如“小草从地下探出头来”→ 小草、地下、探出…
+function segmentSentence(s) {
+  if (!zhSegmenter) return [s];
+  const words = [...zhSegmenter.segment(s)]
+    .filter((x) => x.isWordLike && x.segment.length >= 2)
+    .map((x) => x.segment);
+  return words.length ? words : [s];
 }
 
 // 按空白和标点拆成词，去重，保留顺序
 function splitWords(text) {
-  const parts = cleanOcrText(text)
-    .split(/[\s,，.。;；:：!！?？、"“”'‘’()（）\[\]【】《》<>\-—…·]+/)
-    .map((w) => w.trim())
+  const parts = text
+    .split(SEPARATORS)
+    .flatMap((w) => (hasCJK(w) && w.length > MAX_WORD_LEN ? segmentSentence(w) : [w]))
     .filter((w) => w && (hasCJK(w) || /[a-zA-Z]{2,}/.test(w)))
     .filter((w) => !/^\d+$/.test(w));
   return [...new Set(parts)];
+}
+
+const median = (xs) => {
+  const s = xs.slice().sort((a, b) => a - b);
+  return s.length ? s[Math.floor(s.length / 2)] : 0;
+};
+
+// 识字结果的文字里，空格基本代表词和词之间的空隙（需要打开 preserve_interword_spaces）。
+// 但隔得很远的两个字偶尔会被连在一起（比如生字表里的“秋  冬”），
+// 所以再看每个字的位置：两个汉字之间空出大半个字，也拆开
+function wordsFromOcr(data) {
+  const text = data.text || '';
+  const syms = [];
+  (data.lines || []).forEach((line, li) => {
+    const lineSyms = line.words.flatMap((w) => w.symbols);
+    const charH = median(lineSyms.filter((s) => hasCJK(s.text)).map((s) => s.bbox.y1 - s.bbox.y0));
+    lineSyms.forEach((s) => syms.push({ t: s.text, x0: s.bbox.x0, x1: s.bbox.x1, line: li, charH }));
+  });
+  if (!syms.length) return splitWords(text);
+
+  let out = '';
+  let i = 0;
+  let prev = null;
+  for (const s of syms) {
+    let space = false;
+    while (i < text.length && /\s/.test(text[i])) { space = true; i++; }
+    if (!text.startsWith(s.t, i)) return splitWords(text); // 对不上就只用文字
+    i += s.t.length;
+    if (prev) {
+      const a = hasCJK(prev.t);
+      const b = hasCJK(s.t);
+      const farApart = a && b && s.x0 - prev.x1 > 0.8 * s.charH;
+      const scriptChange = (a && /[a-z]/i.test(s.t)) || (b && /[a-z]/i.test(prev.t));
+      if (space || prev.line !== s.line || farApart || scriptChange) out += '\n';
+    }
+    out += s.t;
+    prev = s;
+  }
+  return splitWords(out);
 }
 
 // ---------- 语音 ----------
@@ -143,7 +191,7 @@ function loadTesseract() {
 async function getWorker() {
   if (ocrWorker) return ocrWorker;
   await loadTesseract();
-  ocrWorker = await Tesseract.createWorker(['chi_sim', 'eng'], 1, {
+  const worker = await Tesseract.createWorker(['chi_sim', 'eng'], 1, {
     logger: (m) => {
       if (m.status === 'recognizing text') {
         $('ocrStatus').textContent = '正在识别文字…';
@@ -153,6 +201,9 @@ async function getWorker() {
       }
     },
   });
+  // 让识字结果里的空格对应真实的空隙，汉字词之间才分得开
+  await worker.setParameters({ preserve_interword_spaces: '1' });
+  ocrWorker = worker;
   return ocrWorker;
 }
 
@@ -185,7 +236,7 @@ async function handleImage(file) {
     $('preview').src = canvas.toDataURL('image/jpeg', 0.8);
     const worker = await getWorker();
     const { data } = await worker.recognize(canvas);
-    const words = splitWords(data.text);
+    const words = wordsFromOcr(data);
     openEditor(null);
     $('wordsText').value = words.join('\n');
     updateCount();
